@@ -10,83 +10,101 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# 세련된 폰트(Noto Sans KR)와 부드러운 애니메이션 적용 CSS
+# 네모고딕 / 210 썬플라워 스타일의 둥글둥글한 산뜻한 웹폰트 적용 CSS
 st.markdown(
     """
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
-        
+        @import url('https://fonts.googleapis.com/css2?family=Jua&family=Gamja+Flower&display=swap');
+        @import url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_two@1.0/NanumSquareRound.woff');
+
+        @font-face {
+            font-family: 'NanumSquareRound';
+            src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_two@1.0/NanumSquareRound.woff') format('woff');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        /* 기본 전체 폰트를 둥글고 산뜻한 나눔스퀘어라운드로 설정 */
         * {
-            font-family: 'Noto Sans KR', sans-serif !important;
+            font-family: 'NanumSquareRound', 'Jua', sans-serif !important;
         }
         
+        /* 메인 타이틀 & 주요 강조 제목은 210 썬플라워 느낌의 'Jua' / 'Gamja Flower' 폰트 사용 */
+        .main-title {
+            font-family: 'Jua', 'Gamja Flower', sans-serif !important;
+            font-size: 34px;
+            font-weight: 700;
+            color: #2563eb;
+            text-align: center;
+            margin-bottom: 4px;
+            letter-spacing: 1px;
+        }
+
+        .card-term {
+            font-family: 'Jua', sans-serif !important;
+            font-size: 36px;
+            font-weight: 700;
+            color: #0284c7;
+            margin-bottom: 15px;
+            letter-spacing: 1px;
+        }
+
         /* 부드러운 카드 및 문제 전환 애니메이션 */
         @keyframes classcardFade {
-            0% { opacity: 0; transform: translateY(12px) scale(0.98); }
+            0% { opacity: 0; transform: translateY(10px) scale(0.98); }
             100% { opacity: 1; transform: translateY(0) scale(1); }
         }
         
         .anim-card {
-            animation: classcardFade 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-        
-        .main-title {
-            font-size: 28px;
-            font-weight: 700;
-            color: #1e3a8a;
-            text-align: center;
-            margin-bottom: 2px;
+            animation: classcardFade 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
         
         .sub-title {
-            font-size: 14px;
+            font-size: 15px;
             color: #64748b;
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 22px;
         }
         
         .card-box {
-            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-            border: 2px solid #cbd5e1;
-            border-radius: 20px;
-            padding: 40px 20px;
+            background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
+            border: 2.5px solid #bae6fd;
+            border-radius: 24px;
+            padding: 42px 20px;
             text-align: center;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 12px 28px -6px rgba(14, 165, 233, 0.15);
             margin-bottom: 20px;
         }
         
-        .card-term {
-            font-size: 32px;
-            font-weight: 700;
-            color: #0284c7;
-            margin-bottom: 15px;
-        }
-        
         .card-def {
-            font-size: 19px;
+            font-size: 20px;
             color: #334155;
             line-height: 1.6;
+            font-weight: 600;
         }
         
         .stButton>button {
-            border-radius: 12px;
-            font-weight: 600;
-            height: 50px;
+            border-radius: 14px;
+            font-weight: 700;
+            font-size: 16px;
+            height: 52px;
             width: 100%;
             transition: all 0.2s ease;
+            border: 1.5px solid #cbd5e1;
         }
         
         .stButton>button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.15);
+            border-color: #3b82f6;
         }
         
         .control-panel {
-            background-color: #f1f5f9;
-            padding: 20px;
-            border-radius: 16px;
+            background-color: #f8fafc;
+            padding: 22px;
+            border-radius: 20px;
             margin-bottom: 25px;
-            border: 1px solid #e2e8f0;
+            border: 2px solid #e2e8f0;
         }
     </style>
 """,
@@ -105,7 +123,7 @@ def load_data():
 
 data = load_data()
 
-# 타이틀 변경 반영
+# 변경된 메인 타이틀
 st.markdown('<p class="main-title">🧪 중학 과학 복습&암기</p>', unsafe_allow_html=True)
 st.markdown(
     '<p class="sub-title">암기부터 객관식·서술형 문제 및 실전 테스트까지 완벽'
@@ -116,7 +134,7 @@ st.markdown(
 if not data:
   st.error("⚠️ `science_data.json` 파일을 찾을 수 없습니다.")
 else:
-  # 메인 화면 접근성 최적화 패널
+  # 메인 화면 설정 패널
   st.markdown('<div class="control-panel">', unsafe_allow_html=True)
   col_a, col_b = st.columns(2)
 
@@ -205,8 +223,8 @@ else:
           )
         else:
           st.markdown(
-              '<div style="color: #94a3b8; font-size: 15px;">👆 아래 버튼을'
-              " 눌러 뜻을 확인하세요</div>",
+              '<div style="color: #94a3b8; font-size: 15px; font-weight: 600;">👆'
+              " 아래 버튼을 눌러 뜻을 확인하세요</div>",
               unsafe_allow_html=True,
           )
         st.markdown("</div>", unsafe_allow_html=True)
@@ -242,7 +260,7 @@ else:
             st.session_state.show_definition = False
             st.rerun()
 
-    # 2. 객관식 문제 모드 (오답 반복)
+    # 2. 객관식 문제 모드
     elif mode == "📝 객관식 문제 (오답 반복)":
       quiz_items = [item for item in filtered_data if item["type"] == "mcq"]
 
@@ -313,7 +331,7 @@ else:
                 st.session_state.sub_mcq = False
                 st.rerun()
 
-    # 3. 서술형 문제 모드 (오답 반복)
+    # 3. 서술형 문제 모드
     elif mode == "✍️ 서술형 문제 (오답 반복)":
       short_items = [item for item in filtered_data if item["type"] == "short"]
 
