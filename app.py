@@ -2,7 +2,7 @@ import json
 import random
 import streamlit as st
 
-# 페이지 기본 설정 (모바일 최적화 및 앱 아이콘 설정)
+# 페이지 기본 설정
 st.set_page_config(
     page_title="중학 과학 완벽 암기장",
     page_icon="🧪",
@@ -10,7 +10,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# 클래스카드 감성의 모던 UI & 부드러운 애니메이션 CSS
+# 클래스카드 스타일 부드러운 전환 애니메이션 CSS 강화
 st.markdown(
     """
     <style>
@@ -20,14 +20,14 @@ st.markdown(
             font-family: 'Pretendard', sans-serif !important;
         }
         
-        /* 부드러운 페이드인 애니메이션 */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
+        /* 부드러운 카드 및 문제 전환 애니메이션 */
+        @keyframes classcardFade {
+            0% { opacity: 0; transform: translateY(12px) scale(0.98); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
         }
         
-        .fade-container {
-            animation: fadeIn 0.35s ease-in-out;
+        .anim-card {
+            animation: classcardFade 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
         
         .main-title {
@@ -45,7 +45,6 @@ st.markdown(
             margin-bottom: 20px;
         }
         
-        /* 클래스카드 스타일 카드 박스 */
         .card-box {
             background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
             border: 2px solid #cbd5e1;
@@ -54,7 +53,6 @@ st.markdown(
             text-align: center;
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
             margin-bottom: 20px;
-            animation: fadeIn 0.3s ease-in-out;
         }
         
         .card-term {
@@ -83,7 +81,6 @@ st.markdown(
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
         
-        /* 상자형 컨테이너 패널 스타일 */
         .control-panel {
             background-color: #f1f5f9;
             padding: 20px;
@@ -97,7 +94,6 @@ st.markdown(
 )
 
 
-# 데이터 로드 함수
 @st.cache_data
 def load_data():
   try:
@@ -109,19 +105,17 @@ def load_data():
 
 data = load_data()
 
-# 메인 헤더
 st.markdown('<p class="main-title">🧪 중학 과학 클래스카드</p>', unsafe_allow_html=True)
 st.markdown(
-    '<p class="sub-title">암기부터 객관식·서술형·실전 테스트까지 완벽 대비</p>',
+    '<p class="sub-title">암기부터 객관식·서술형 문제 및 실전 테스트까지 완벽'
+    " 대비</p>",
     unsafe_allow_html=True,
 )
 
 if not data:
   st.error("⚠️ `science_data.json` 파일을 찾을 수 없습니다.")
 else:
-  # -------------------------------------------------------------------------
-  # 사용자 접근성을 고려한 메인 화면 설정 패널 (사이드바 아님!)
-  # -------------------------------------------------------------------------
+  # 메인 화면 접근성 최적화 패널
   st.markdown('<div class="control-panel">', unsafe_allow_html=True)
   col_a, col_b = st.columns(2)
 
@@ -143,20 +137,19 @@ else:
         "📖 단원 선택", ["전체 단원 보기"] + units_in_grade
     )
 
-  # 모드 선택 (암기, 객관식 문제, 서술형 문제, 테스트 모드)
+  # 용어 변경 반영 (암기, 객관식 문제, 서술형 문제, 실전 테스트)
   mode = st.radio(
       "🎯 학습 모드 선택",
       [
-          "🃏 암기 (플래시카드)",
+          "🃏 암기",
           "📝 객관식 문제 (오답 반복)",
           "✍️ 서술형 문제 (오답 반복)",
-          "🏆 실전 테스트 (시험 모드)",
+          "🏆 실전 테스트",
       ],
       horizontal=True,
   )
   st.markdown("</div>", unsafe_allow_html=True)
 
-  # 데이터 필터링
   if selected_unit == "전체 단원 보기":
     filtered_data = [item for item in data if item["grade"] == selected_grade]
   else:
@@ -169,12 +162,10 @@ else:
   if not filtered_data:
     st.warning("해당 조건에 등록된 학습 내용이 없습니다.")
   else:
-    st.markdown('<div class="fade-container">', unsafe_allow_html=True)
+    st.markdown('<div class="anim-card">', unsafe_allow_html=True)
 
-    # -------------------------------------------------------------------------
-    # 1. 암기 모드 (플래시카드)
-    # -------------------------------------------------------------------------
-    if mode == "🃏 암기 (플래시카드)":
+    # 1. 암기 모드
+    if mode == "🃏 암기":
       if "shuffled_cards" not in st.session_state or st.session_state.get(
           "current_card_filter"
       ) != (selected_grade, selected_unit):
@@ -213,8 +204,8 @@ else:
           )
         else:
           st.markdown(
-              '<div style="color: #94a3b8; font-size: 15px;">👆 카드를 눌러 뜻을'
-              " 확인하세요 (아래 버튼 클릭)</div>",
+              '<div style="color: #94a3b8; font-size: 15px;">👆 아래 버튼을'
+              " 눌러 뜻을 확인하세요</div>",
               unsafe_allow_html=True,
           )
         st.markdown("</div>", unsafe_allow_html=True)
@@ -250,9 +241,7 @@ else:
             st.session_state.show_definition = False
             st.rerun()
 
-    # -------------------------------------------------------------------------
     # 2. 객관식 문제 모드 (오답 반복)
-    # -------------------------------------------------------------------------
     elif mode == "📝 객관식 문제 (오답 반복)":
       quiz_items = [item for item in filtered_data if item["type"] == "mcq"]
 
@@ -274,9 +263,7 @@ else:
         total = st.session_state.orig_count_mcq
 
         if len(queue) == 0:
-          st.success(
-              "🎉 완벽합니다! 이 단원의 모든 객관식 문제를 마스터하셨습니다!"
-          )
+          st.success("🎉 완벽합니다! 이 단원의 객관식을 모두 마스터하셨습니다!")
           if st.button("🔄 객관식 문제 다시 풀기"):
             new_s = list(quiz_items)
             random.shuffle(new_s)
@@ -325,9 +312,7 @@ else:
                 st.session_state.sub_mcq = False
                 st.rerun()
 
-    # -------------------------------------------------------------------------
     # 3. 서술형 문제 모드 (오답 반복)
-    # -------------------------------------------------------------------------
     elif mode == "✍️ 서술형 문제 (오답 반복)":
       short_items = [item for item in filtered_data if item["type"] == "short"]
 
@@ -349,7 +334,9 @@ else:
         total = st.session_state.orig_count_short
 
         if len(queue) == 0:
-          st.success("🎉 완벽합니다! 이 단원의 서술형 문제를 모두 정복하셨습니다!")
+          st.success(
+              "🎉 완벽합니다! 이 단원의 서술형 문제를 모두 정복하셨습니다!"
+          )
           if st.button("🔄 서술형 문제 다시 풀기"):
             new_s = list(short_items)
             random.shuffle(new_s)
@@ -396,10 +383,8 @@ else:
                 st.session_state.sub_short = False
                 st.rerun()
 
-    # -------------------------------------------------------------------------
-    # 4. 실전 테스트 (클래스카드 스타일 시험 모드)
-    # -------------------------------------------------------------------------
-    elif mode == "🏆 실전 테스트 (시험 모드)":
+    # 4. 실전 테스트 모드
+    elif mode == "🏆 실전 테스트":
       test_items = [
           item for item in filtered_data if item["type"] in ["mcq", "short"]
       ]
@@ -417,7 +402,7 @@ else:
           st.markdown(
               "### 📝 실전 테스트 모드 안내\n- 선택한 단원의 문제 중"
               " 무작위로 최대 5문제가 출제됩니다.\n- 제한 없이 쭉 풀고 난 뒤"
-              " **마지막에 최종 점수와 오답노트**를 확인할 수 있습니다!"
+              " **최종 점수와 오답 노트**를 확인할 수 있습니다!"
           )
           if st.button("🚀 테스트 시작하기"):
             selected_tests = random.sample(
@@ -461,7 +446,6 @@ else:
               st.session_state.test_submitted = True
               st.rerun()
           else:
-            # 채점 결과 및 오답 노트 리포트
             st.markdown("### 📊 실전 테스트 채점 결과")
             score = 0
             questions = st.session_state.test_questions
