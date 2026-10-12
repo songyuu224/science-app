@@ -4,20 +4,20 @@ import streamlit as st
 
 # 페이지 기본 설정
 st.set_page_config(
-    page_title="중학 과학 완벽 암기장",
+    page_title="중학 과학 복습&암기",
     page_icon="🧪",
     layout="centered",
     initial_sidebar_state="collapsed",
 )
 
-# 클래스카드 스타일 부드러운 전환 애니메이션 CSS 강화
+# 세련된 폰트(Noto Sans KR)와 부드러운 애니메이션 적용 CSS
 st.markdown(
     """
     <style>
-        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
         
         * {
-            font-family: 'Pretendard', sans-serif !important;
+            font-family: 'Noto Sans KR', sans-serif !important;
         }
         
         /* 부드러운 카드 및 문제 전환 애니메이션 */
@@ -32,8 +32,8 @@ st.markdown(
         
         .main-title {
             font-size: 28px;
-            font-weight: 800;
-            color: #0f172a;
+            font-weight: 700;
+            color: #1e3a8a;
             text-align: center;
             margin-bottom: 2px;
         }
@@ -105,7 +105,8 @@ def load_data():
 
 data = load_data()
 
-st.markdown('<p class="main-title">🧪 중학 과학 클래스카드</p>', unsafe_allow_html=True)
+# 타이틀 변경 반영
+st.markdown('<p class="main-title">🧪 중학 과학 복습&암기</p>', unsafe_allow_html=True)
 st.markdown(
     '<p class="sub-title">암기부터 객관식·서술형 문제 및 실전 테스트까지 완벽'
     " 대비</p>",
@@ -137,7 +138,7 @@ else:
         "📖 단원 선택", ["전체 단원 보기"] + units_in_grade
     )
 
-  # 용어 변경 반영 (암기, 객관식 문제, 서술형 문제, 실전 테스트)
+  # 학습 모드 선택
   mode = st.radio(
       "🎯 학습 모드 선택",
       [
