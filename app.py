@@ -21,12 +21,11 @@ def load_data():
 data = load_data()
 
 # -------------------------------------------------------------
-# 사이드바: 학년 및 단원 필터 (전역 설정)
+# 사이드바: 학년 및 단원 설정
 # -------------------------------------------------------------
 st.sidebar.markdown("### 🎛️ 학습 설정")
 if not data:
   grades = ["1학년"]
-  units = ["데이터 없음"]
 else:
   grades = sorted(list(set(item["grade"] for item in data)))
 selected_grade = st.sidebar.selectbox("📚 학년 선택", grades)
@@ -60,24 +59,23 @@ else:
     ]
 
 # -------------------------------------------------------------
-# 메인 화면: 앱을 켰을 때 바로 뜨는 깔끔한 대시보드 메뉴
+# 메인 홈 화면: 앱을 켜면 바로 뜨는 깔끔한 대시보드 메뉴
 # -------------------------------------------------------------
 st.markdown("## 🧪 중학 과학 복습 & 암기 마스터 플랫폼")
 st.markdown(
-    "중학교 1~3학년 전 과학 개념을 완벽하게 정리하고, 암기와 실전 문제까지"
-    " 한 번에 해결하세요!"
+    "중학교 1~3학년 전 과학 개념과 자잘한 암기 팁까지 완벽하게 정복하세요!"
 )
 st.divider()
 
-# 세션 상태를 이용한 페이지(창) 전환 관리
+# 세션 상태로 페이지(창) 관리
 if "current_page" not in st.session_state:
   st.session_state.current_page = "메인 홈"
 
-# 상단 또는 메인 카드 형태의 네비게이션 버튼 영역
+# 메인 메뉴 버튼 영역 (누르면 해당 창으로 즉시 이동)
 col_m1, col_m2, col_m3, col_m4, col_m5 = st.columns(5)
 
 with col_m1:
-  if st.button("📖 개념 학습", use_container_width=True):
+  if st.button("📖 대폭 강화된 개념", use_container_width=True):
     st.session_state.current_page = "개념 학습"
     st.rerun()
 with col_m2:
@@ -86,7 +84,6 @@ with col_m2:
     st.rerun()
 with col_m3:
   if st.button("📝 객관식 문제", use_container_width=True):
-    st.session_width = "객관식 문제"
     st.session_state.current_page = "객관식 문제"
     st.rerun()
 with col_m4:
@@ -98,9 +95,9 @@ with col_m5:
     st.session_state.current_page = "실전 테스트"
     st.rerun()
 
-st.markdown("")  # 여백
+st.markdown("")
 
-# 홈으로 돌아가기 버튼 (상세 페이지 내부용)
+# 상세 페이지 내부의 '메인으로 돌아가기' 버튼
 if st.session_state.current_page != "메인 홈":
   if st.button("🏠 메인 메뉴로 돌아가기"):
     st.session_state.current_page = "메인 홈"
@@ -108,61 +105,60 @@ if st.session_state.current_page != "메인 홈":
   st.markdown("---")
 
 # -------------------------------------------------------------
-# 각 메뉴별 독립된 창(페이지) 렌더링
+# 각 메뉴별 독립된 창 렌더링
 # -------------------------------------------------------------
 
 if st.session_state.current_page == "메인 홈":
   st.info(
-      "👆 위의 메뉴 버튼을 클릭하여 원하는 학습 모드(개념, 암기, 객관식, 서술형,"
-      " 실전 테스트)로 바로 이동하세요!"
+      "👆 상단의 메뉴 버튼을 클릭하여 원하는 학습 창으로 바로 이동해"
+      " 보세요!"
   )
 
-  st.markdown("### 📊 현재 선택된 학습 정보")
+  st.markdown("### 📊 현재 학습 현황")
   st.markdown(f"- **선택 학년:** {selected_grade}")
   st.markdown(f"- **선택 단원:** {selected_unit}")
-  st.markdown(f"- **등록된 총 학습/문제 데이터 수:** {len(filtered_data)}개")
+  st.markdown(f"- **총 등록된 학습/문제 항목:** {len(filtered_data)}개")
 
   st.markdown("---")
-  st.markdown("### 💡 선생님의 학습 가이드")
+  st.markdown("### 💡 과학 만점 공부 팁")
   st.markdown(
-      "1. **📖 개념 학습**: 선생님이 꼼꼼하게 정리한 250개 이상의 핵심 용어와"
-      " 도식 설명을 먼저 읽어보세요."
+      "1. **📖 대폭 강화된 개념**: 시험에 자주 나오는 자잘한 개념과 공식들을"
+      " 사람 눈에 편한 수식으로 싹 정리했습니다."
   )
   st.markdown(
-      "2. **🎴 암기 파트**: 카드를 넘기며 주요 개념과 시각 자료를 반복해서"
-      " 암기합니다."
+      "2. **🎴 암기 파트**: 카드를 넘기며 핵심 키워드와 그림 설명을 매칭해"
+      " 외우세요."
   )
   st.markdown(
-      "3. **📝 객관식 / ✍️ 서술형**: 배운 내용을 바탕으로 학교 시험에 자주 나오는"
-      " 유형을 풀어봅니다."
-  )
-  st.markdown(
-      "4. **🏆 실전 테스트**: 단원 전체를 종합하여 나의 실력을 최종"
-      " 점검합니다."
+      "3. **📝 문제 은행 & 실전 테스트**: 배운 내용을 실전에 적용하며 완벽히"
+      " 내 것으로 만듭니다."
   )
 
 elif st.session_state.current_page == "개념 학습":
   st.markdown(
-      f"## 📖 [{selected_grade} / {selected_unit}] 꼼꼼 핵심 개념 노트"
+      f"## 📖 [{selected_grade} / {selected_unit}] 꼼꼼 핵심 개념 & 지엽 암기"
+      " 노트"
   )
-  st.markdown("중학교 과학에서 반드시 알아야 할 핵심 정의와 원리입니다.")
+  st.markdown(
+      "시험에 헷갈리기 쉬운 세부 내용과 공식들을 알기 쉽게 풀어놓은"
+      " 공간입니다."
+  )
   st.divider()
 
   concepts = [item for item in filtered_data if item["type"] == "card"]
   if not concepts:
-    st.warning("조건에 맞는 개념 데이터가 없습니다.")
+    st.warning("등록된 개념 데이터가 없습니다.")
   else:
     for idx, c in enumerate(concepts):
       with st.container():
         st.markdown(f"### 📌 핵심 개념 {idx + 1}: {c['term']}")
-        st.success(f"**[개념 및 원리 설명]**\n\n{c['definition']}")
+        st.success(f"**[개념 및 공식 정리]**\n\n{c['definition']}")
         if "image_description" in c and c["image_description"]:
-          st.info(f"🖼️ **[시각 자료 및 도식 해설]**\n\n{c['image_description']}")
+          st.info(f"🖼️ **[시각 자료 및 상세 해설]**\n\n{c['image_description']}")
         st.markdown("---")
 
 elif st.session_state.current_page == "암기 파트":
   st.markdown(f"## 🎴 [{selected_grade} / {selected_unit}] 암기 플래시카드")
-  st.markdown("핵심 용어와 그림 설명을 보며 머릿속에 확실히인쇄하세요!")
   st.divider()
 
   cards = [item for item in filtered_data if item["type"] == "card"]
@@ -178,20 +174,20 @@ elif st.session_state.current_page == "암기 파트":
     st.markdown(f"**카드 번호:** {st.session_state.card_idx + 1} / {len(cards)}")
 
     with st.container():
-      st.markdown(f"### 💡 용어: {card['term']}")
-      st.warning(f"정의:")
+      st.markdown(f"### 💡 키워드: {card['term']}")
+      st.warning(f"핵심 내용:")
       if "image_description" in card and card["image_description"]:
         st.info(f"🖼️ **[그림 도식 설명]**\n\n{card['image_description']}")
 
     c1, c2 = st.columns(2)
     with c1:
-      if st.button("⬅️ 이전 카드 보기"):
+      if st.button("⬅️ 이전 카드"):
         if st.session_state.card_idx > 0:
           st.session_state.card_idx -= 1
           st.rerun()
     with c2:
-      if st.button("다음 카드 보기 ➡️"):
-        if st.session_state.card_idx < len(cards) - 1:
+      if st.button("다음 카드 ➡️"):
+        if st.session_state.card_idx < len(cards - 1):
           st.session_state.card_idx += 1
           st.rerun()
 
