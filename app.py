@@ -1,117 +1,13 @@
 import json
-import random
 import streamlit as st
 
-# 페이지 기본 설정
+# 페이지 설정
 st.set_page_config(
-    page_title="중학 과학 복습&암기",
-    page_icon="🧪",
-    layout="centered",
-    initial_sidebar_state="collapsed",
-)
-
-# 네모고딕 / 210 썬플라워 스타일의 둥글둥글한 산뜻한 웹폰트 적용 CSS
-st.markdown(
-    """
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Jua&family=Gamja+Flower&display=swap');
-        @import url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_two@1.0/NanumSquareRound.woff');
-
-        @font-face {
-            font-family: 'NanumSquareRound';
-            src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_two@1.0/NanumSquareRound.woff') format('woff');
-            font-weight: normal;
-            font-style: normal;
-        }
-
-        /* 기본 전체 폰트를 둥글고 산뜻한 나눔스퀘어라운드로 설정 */
-        * {
-            font-family: 'NanumSquareRound', 'Jua', sans-serif !important;
-        }
-        
-        /* 메인 타이틀 & 주요 강조 제목은 210 썬플라워 느낌의 'Jua' / 'Gamja Flower' 폰트 사용 */
-        .main-title {
-            font-family: 'Jua', 'Gamja Flower', sans-serif !important;
-            font-size: 34px;
-            font-weight: 700;
-            color: #2563eb;
-            text-align: center;
-            margin-bottom: 4px;
-            letter-spacing: 1px;
-        }
-
-        .card-term {
-            font-family: 'Jua', sans-serif !important;
-            font-size: 36px;
-            font-weight: 700;
-            color: #0284c7;
-            margin-bottom: 15px;
-            letter-spacing: 1px;
-        }
-
-        /* 부드러운 카드 및 문제 전환 애니메이션 */
-        @keyframes classcardFade {
-            0% { opacity: 0; transform: translateY(10px) scale(0.98); }
-            100% { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        
-        .anim-card {
-            animation: classcardFade 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-        
-        .sub-title {
-            font-size: 15px;
-            color: #64748b;
-            text-align: center;
-            margin-bottom: 22px;
-        }
-        
-        .card-box {
-            background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
-            border: 2.5px solid #bae6fd;
-            border-radius: 24px;
-            padding: 42px 20px;
-            text-align: center;
-            box-shadow: 0 12px 28px -6px rgba(14, 165, 233, 0.15);
-            margin-bottom: 20px;
-        }
-        
-        .card-def {
-            font-size: 20px;
-            color: #334155;
-            line-height: 1.6;
-            font-weight: 600;
-        }
-        
-        .stButton>button {
-            border-radius: 14px;
-            font-weight: 700;
-            font-size: 16px;
-            height: 52px;
-            width: 100%;
-            transition: all 0.2s ease;
-            border: 1.5px solid #cbd5e1;
-        }
-        
-        .stButton>button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.15);
-            border-color: #3b82f6;
-        }
-        
-        .control-panel {
-            background-color: #f8fafc;
-            padding: 22px;
-            border-radius: 20px;
-            margin-bottom: 25px;
-            border: 2px solid #e2e8f0;
-        }
-    </style>
-""",
-    unsafe_allow_html=True,
+    page_title="중학교 과학 마스터 & 개념 학습", page_icon="🧪", layout="wide"
 )
 
 
+# 데이터 로드 함수 (캐시 적용)
 @st.cache_data
 def load_data():
   try:
@@ -123,26 +19,24 @@ def load_data():
 
 data = load_data()
 
-# 변경된 메인 타이틀
-st.markdown('<p class="main-title">🧪 중학 과학 복습&암기</p>', unsafe_allow_html=True)
+st.title("🧪 중학교 과학 학습 플랫폼 (개념 · 암기 · 문제)")
 st.markdown(
-    '<p class="sub-title">암기부터 객관식·서술형 문제 및 실전 테스트까지 완벽'
-    " 대비</p>",
-    unsafe_allow_html=True,
+    "원하는 **학년**과 **소단원**을 선택한 뒤, **[개념 파트]**로 기초를 잡고,"
+    " **[암기 파트]**와 **[문제 은행]**으로 실력을 완성해 보세요!"
 )
 
 if not data:
-  st.error("⚠️ `science_data.json` 파일을 찾을 수 없습니다.")
+  st.error(
+      "❌ `science_data.json` 파일을 찾을 수 없습니다. 프로젝트 폴더에"
+      " JSON 파일이 있는지 확인해 주세요."
+  )
 else:
-  # 메인 화면 설정 패널
-  st.markdown('<div class="control-panel">', unsafe_allow_html=True)
-  col_a, col_b = st.columns(2)
+  # 학년 목록 추출
+  grades = sorted(list(set(item["grade"] for item in data)))
+  selected_grade = st.sidebar.selectbox("학년 선택", grades)
 
-  with col_a:
-    grades = sorted(list(set(item["grade"] for item in data)))
-    selected_grade = st.selectbox("📚 학년 선택", grades)
-
-  units_in_grade = sorted(
+  # 선택된 학년에 해당하는 소단원 목록 추출
+  units = sorted(
       list(
           set(
               item["unit"]
@@ -151,354 +45,132 @@ else:
           )
       )
   )
-  with col_b:
-    selected_unit = st.selectbox(
-        "📖 단원 선택", ["전체 단원 보기"] + units_in_grade
-    )
+  selected_unit = st.sidebar.selectbox("소단원 선택", units)
 
-  # 학습 모드 선택
-  mode = st.radio(
-      "🎯 학습 모드 선택",
+  # 사이드바 학습 모드 선택 (개념 파트 명시적 추가)
+  mode = st.sidebar.radio(
+      "학습 모드 선택",
       [
-          "🃏 암기",
-          "📝 객관식 문제 (오답 반복)",
-          "✍️ 서술형 문제 (오답 반복)",
-          "🏆 실전 테스트",
+          "📖 개념 파트 (핵심 정리 & 도식)",
+          "🎴 암기 파트 (플래시카드 & 그림 설명)",
+          "📝 문제 은행 (객관식 / 서술형)",
       ],
-      horizontal=True,
   )
-  st.markdown("</div>", unsafe_allow_html=True)
 
-  if selected_unit == "전체 단원 보기":
-    filtered_data = [item for item in data if item["grade"] == selected_grade]
-  else:
-    filtered_data = [
-        item
-        for item in data
-        if item["grade"] == selected_grade and item["unit"] == selected_unit
-    ]
+  # 필터링된 데이터
+  filtered_data = [
+      item
+      for item in data
+      if item["grade"] == selected_grade and item["unit"] == selected_unit
+  ]
 
-  if not filtered_data:
-    st.warning("해당 조건에 등록된 학습 내용이 없습니다.")
-  else:
-    st.markdown('<div class="anim-card">', unsafe_allow_html=True)
+  # -------------------------------------------------------------
+  # 1. 📖 개념 파트 (핵심 정리 및 개념 이해)
+  # -------------------------------------------------------------
+  if mode == "📖 개념 파트 (핵심 정리 & 도식)":
+    st.header(f"📖 [{selected_unit}] - 개념 파트")
+    st.markdown("이 소단원에서 반드시 알아야 할 **핵심 개념과 기초 정의**입니다.")
+    st.divider()
 
-    # 1. 암기 모드
-    if mode == "🃏 암기":
-      if "shuffled_cards" not in st.session_state or st.session_state.get(
-          "current_card_filter"
-      ) != (selected_grade, selected_unit):
-        cards = [item for item in filtered_data if item["type"] == "card"]
-        random.shuffle(cards)
-        st.session_state.shuffled_cards = cards
-        st.session_state.card_idx = 0
-        st.session_state.show_definition = False
-        st.session_state.current_card_filter = (selected_grade, selected_unit)
+    # card 타입 데이터에서 개념 정의를 뽑아와서 개념 노트 형태로 출력
+    concepts = [item for item in filtered_data if item["type"] == "card"]
 
-      cards = st.session_state.shuffled_cards
+    if not concepts:
+      st.info("이 단원에 등록된 개념 데이터가 없습니다.")
+    else:
+      for idx, c in enumerate(concepts):
+        with st.container():
+          st.subheader(f"📌 핵심 개념 {idx + 1}. {c['term']}")
+          st.success(f"**[개념 및 정의]**\n\n{c['definition']}")
 
-      if not cards:
-        st.info("이 조건에는 등록된 암기 카드가 없습니다.")
-      else:
-        if st.session_state.card_idx >= len(cards):
-          st.session_state.card_idx = 0
+          # 그림/도식 설명이 함께 제공되도록 연동
+          if "image_description" in c and c["image_description"]:
+            st.info(f"🖼️ **[개념 도식 및 그림 설명]**\n\n{c['image_description']}")
 
-        current_card = cards[st.session_state.card_idx]
+          if "image_url" in c and c["image_url"]:
+            st.image(c["image_url"], caption=c["term"], use_column_width=True)
 
-        st.markdown(
-            f"**[{selected_grade} / {current_card['unit']}]** (카드"
-            f" {st.session_state.card_idx + 1} / {len(cards)})"
+          st.markdown("---")
+
+  # -------------------------------------------------------------
+  # 2. 🎴 암기 파트 (플래시카드 + 그림 설명)
+  # -------------------------------------------------------------
+  elif mode == "🎴 암기 파트 (플래시카드 & 그림 설명)":
+    st.header(f"🎴 [{selected_unit}] - 암기 파트")
+    st.markdown("개념을 확실히 내 것으로 만들기 위한 **암기 플래시카드**입니다.")
+    st.divider()
+
+    cards = [item for item in filtered_data if item["type"] == "card"]
+
+    if not cards:
+      st.info("이 단원에 등록된 암기 카드가 없습니다.")
+    else:
+      for idx, card in enumerate(cards):
+        with st.container():
+          st.subheader(f"🎴 암기 카드 {idx + 1}. {card['term']}")
+          st.warning(f"💡 정의:")
+
+          if "image_description" in card and card["image_description"]:
+            st.info(f"🖼️ **[그림으로 이해하기]**\n\n{card['image_description']}")
+
+          if "image_url" in card and card["image_url"]:
+            st.image(
+                card["image_url"],
+                caption=card["term"],
+                use_column_width=True,
+            )
+
+          st.markdown("---")
+
+  # -------------------------------------------------------------
+  # 3. 📝 문제 은행 (객관식 & 서술형)
+  # -------------------------------------------------------------
+  elif mode == "📝 문제 은행 (객관식 / 서술형)":
+    st.header(f"📝 [{selected_unit}] - 문제 은행")
+    st.markdown("객관식과 서술형 문제를 풀며 실력을 점검해 보세요.")
+    st.divider()
+
+    # 객관식 문제들
+    mcqs = [item for item in filtered_data if item["type"] == "mcq"]
+    if mcqs:
+      st.subheader("📌 객관식 문제")
+      for idx, q in enumerate(mcqs):
+        st.markdown(f"**Q{idx + 1}. {q['question']}**")
+
+        user_choice = st.radio(
+            f"정답을 선택하세요 (Q{idx + 1})",
+            options=range(len(q["options"])),
+            format_func=lambda x: q["options"][x],
+            key=f"mcq_{selected_unit}_{idx}",
         )
 
-        st.markdown('<div class="card-box">', unsafe_allow_html=True)
-        st.markdown(
-            f'<div class="card-term">{current_card["term"]}</div>',
-            unsafe_allow_html=True,
+        if st.button(f"정답 확인 (Q{idx + 1})", key=f"btn_mcq_{selected_unit}_{idx}"):
+          if user_choice + 1 == q["answer"]:
+            st.success(f"정답입니다! 🎉\n\n**해설:** {q['explanation']}")
+          else:
+            st.error(
+                f"틀렸습니다. 정답은 {q['answer']}번 입니다.\n\n**해설:**"
+                f" {q['explanation']}"
+            )
+        st.markdown("---")
+
+    # 서술형 문제들
+    shorts = [item for item in filtered_data if item["type"] == "short"]
+    if shorts:
+      st.subheader("✍️ 서술형 문제")
+      for idx, s in enumerate(shorts):
+        st.markdown(f"**S{idx + 1}. {s['question']}**")
+
+        user_answer = st.text_area(
+            f"답안을 작성하세요 (S{idx + 1})", key=f"short_{selected_unit}_{idx}"
         )
 
-        if st.session_state.show_definition:
-          st.markdown(
-              f'<div class="card-def">{current_card["definition"]}</div>',
-              unsafe_allow_html=True,
-          )
-        else:
-          st.markdown(
-              '<div style="color: #94a3b8; font-size: 15px; font-weight: 600;">👆'
-              " 아래 버튼을 눌러 뜻을 확인하세요</div>",
-              unsafe_allow_html=True,
-          )
-        st.markdown("</div>", unsafe_allow_html=True)
-
-        if not st.session_state.show_definition:
-          if st.button("🔍 뜻 확인하기"):
-            st.session_state.show_definition = True
-            st.rerun()
-        else:
-          if st.button("🙈 뜻 숨기기"):
-            st.session_state.show_definition = False
-            st.rerun()
-
-        col1, col2, col3 = st.columns([1, 1, 1])
-        with col1:
-          if st.button("⬅️ 이전 카드"):
-            st.session_state.card_idx = (st.session_state.card_idx - 1) % len(
-                cards
-            )
-            st.session_state.show_definition = False
-            st.rerun()
-        with col2:
-          if st.button("🔀 카드 섞기"):
-            random.shuffle(cards)
-            st.session_state.card_idx = 0
-            st.session_state.show_definition = False
-            st.rerun()
-        with col3:
-          if st.button("다음 카드 ➡️"):
-            st.session_state.card_idx = (st.session_state.card_idx + 1) % len(
-                cards
-            )
-            st.session_state.show_definition = False
-            st.rerun()
-
-    # 2. 객관식 문제 모드
-    elif mode == "📝 객관식 문제 (오답 반복)":
-      quiz_items = [item for item in filtered_data if item["type"] == "mcq"]
-
-      if not quiz_items:
-        st.info("이 조건에는 등록된 객관식 문제가 없습니다.")
-      else:
-        if "quiz_queue_mcq" not in st.session_state or st.session_state.get(
-            "current_filter_mcq"
-        ) != (selected_grade, selected_unit):
-          shuffled = list(quiz_items)
-          random.shuffle(shuffled)
-          st.session_state.quiz_queue_mcq = shuffled
-          st.session_state.orig_count_mcq = len(quiz_items)
-          st.session_state.current_filter_mcq = (selected_grade, selected_unit)
-          st.session_state.score_mcq = 0
-          st.session_state.sub_mcq = False
-
-        queue = st.session_state.quiz_queue_mcq
-        total = st.session_state.orig_count_mcq
-
-        if len(queue) == 0:
-          st.success("🎉 완벽합니다! 이 단원의 객관식을 모두 마스터하셨습니다!")
-          if st.button("🔄 객관식 문제 다시 풀기"):
-            new_s = list(quiz_items)
-            random.shuffle(new_s)
-            st.session_state.quiz_queue_mcq = new_s
-            st.session_state.sub_mcq = False
-            st.rerun()
-        else:
-          current_q = queue[0]
-          solved = total - len(queue)
-          st.progress(solved / total)
-          st.markdown(
-              f"**남은 문제:** {len(queue)}개 | **맞춘 누적 횟수:**"
-              f" {st.session_state.score_mcq}"
-          )
-          st.markdown(f"### [{current_q['unit']}]")
-          st.markdown(f"**Q. {current_q['question']}**")
-
-          user_choice = st.radio(
-              "정답을 선택하세요:",
-              current_q["options"],
-              key=f"mcq_{current_q['question']}_{len(queue)}",
-          )
-
-          if not st.session_state.sub_mcq:
-            if st.button("정답 제출하기"):
-              selected_num = int(user_choice.split(".")[0])
-              st.session_state.sub_mcq = True
-              st.session_state.is_corr_mcq = (
-                  selected_num == current_q["answer"]
-              )
-              st.rerun()
+        if st.button(
+            f"모범 답안 확인 (S{idx + 1})", key=f"btn_short_{selected_unit}_{idx}"
+        ):
+          if user_answer.strip():
+            st.info(f"✨ **모범 답안:** {s['answer']}")
+            st.markdown(f"💡 **채점 기준 및 해설:** {s['explanation']}")
           else:
-            if st.session_state.is_corr_mcq:
-              st.success("정답입니다! 👏 깔끔하게 맞추셨네요!")
-              if st.button("다음 문제로 ➡️"):
-                st.session_state.quiz_queue_mcq.pop(0)
-                st.session_state.score_mcq += 1
-                st.session_state.sub_mcq = False
-                st.rerun()
-            else:
-              st.error(f"오답입니다. 🥲 정답은 **{current_q['answer']}번**입니다.")
-              st.info(f"💡 **해설**: {current_q['explanation']}")
-              if st.button("🔄 틀린 문제 다시 도전하기 (맞출 때까지 반복!)"):
-                wrong = st.session_state.quiz_queue_mcq.pop(0)
-                st.session_state.quiz_queue_mcq.append(wrong)
-                st.session_state.sub_mcq = False
-                st.rerun()
-
-    # 3. 서술형 문제 모드
-    elif mode == "✍️ 서술형 문제 (오답 반복)":
-      short_items = [item for item in filtered_data if item["type"] == "short"]
-
-      if not short_items:
-        st.info("이 조건에는 등록된 서술형 문제가 없습니다.")
-      else:
-        if "quiz_queue_short" not in st.session_state or st.session_state.get(
-            "current_filter_short"
-        ) != (selected_grade, selected_unit):
-          shuffled = list(short_items)
-          random.shuffle(shuffled)
-          st.session_state.quiz_queue_short = shuffled
-          st.session_state.orig_count_short = len(short_items)
-          st.session_state.current_filter_short = (selected_grade, selected_unit)
-          st.session_state.score_short = 0
-          st.session_state.sub_short = False
-
-        queue = st.session_state.quiz_queue_short
-        total = st.session_state.orig_count_short
-
-        if len(queue) == 0:
-          st.success(
-              "🎉 완벽합니다! 이 단원의 서술형 문제를 모두 정복하셨습니다!"
-          )
-          if st.button("🔄 서술형 문제 다시 풀기"):
-            new_s = list(short_items)
-            random.shuffle(new_s)
-            st.session_state.quiz_queue_short = new_s
-            st.session_state.sub_short = False
-            st.rerun()
-        else:
-          current_q = queue[0]
-          solved = total - len(queue)
-          st.progress(solved / total)
-          st.markdown(
-              f"**남은 문제:** {len(queue)}개 | **맞춘 누적 횟수:**"
-              f" {st.session_state.score_short}"
-          )
-          st.markdown(f"### [{current_q['unit']}]")
-          st.markdown(f"**Q. {current_q['question']}**")
-
-          user_input = st.text_input(
-              "정답을 입력하세요:",
-              key=f"short_input_{current_q['question']}_{len(queue)}",
-          )
-
-          if not st.session_state.sub_short:
-            if st.button("정답 제출하기"):
-              st.session_state.sub_short = True
-              clean_input = user_input.strip().replace(" ", "")
-              clean_answer = str(current_q["answer"]).strip().replace(" ", "")
-              st.session_state.is_corr_short = clean_input == clean_answer
-              st.rerun()
-          else:
-            if st.session_state.is_corr_short:
-              st.success("정답입니다! 👏 완벽해요!")
-              if st.button("다음 문제로 ➡️"):
-                st.session_state.quiz_queue_short.pop(0)
-                st.session_state.score_short += 1
-                st.session_state.sub_short = False
-                st.rerun()
-            else:
-              st.error(f"아쉽네요! 정답은 **'{current_q['answer']}'** 입니다.")
-              st.info(f"💡 **해설**: {current_q['explanation']}")
-              if st.button("🔄 틀린 문제 다시 도전하기 (맞출 때까지 반복!)"):
-                wrong = st.session_state.quiz_queue_short.pop(0)
-                st.session_state.quiz_queue_short.append(wrong)
-                st.session_state.sub_short = False
-                st.rerun()
-
-    # 4. 실전 테스트 모드
-    elif mode == "🏆 실전 테스트":
-      test_items = [
-          item for item in filtered_data if item["type"] in ["mcq", "short"]
-      ]
-
-      if not test_items:
-        st.info("실전 테스트에 출제할 문제가 부족합니다.")
-      else:
-        if "test_started" not in st.session_state or st.session_state.get(
-            "test_filter"
-        ) != (selected_grade, selected_unit):
-          st.session_state.test_started = False
-          st.session_state.test_filter = (selected_grade, selected_unit)
-
-        if not st.session_state.test_started:
-          st.markdown(
-              "### 📝 실전 테스트 모드 안내\n- 선택한 단원의 문제 중"
-              " 무작위로 최대 5문제가 출제됩니다.\n- 제한 없이 쭉 풀고 난 뒤"
-              " **최종 점수와 오답 노트**를 확인할 수 있습니다!"
-          )
-          if st.button("🚀 테스트 시작하기"):
-            selected_tests = random.sample(
-                test_items, min(5, len(test_items))
-            )
-            st.session_state.test_questions = selected_tests
-            st.session_state.test_answers = {}
-            st.session_state.test_submitted = False
-            st.session_state.test_started = True
-            st.rerun()
-        else:
-          questions = st.session_state.test_questions
-
-          if not st.session_state.test_submitted:
-            st.markdown("### ✍️ 테스트 진행 중...")
-            user_responses = {}
-
-            for idx, q in enumerate(questions):
-              st.markdown(
-                  f"**문제 {idx + 1}. [{q['unit']}] {q['question']}**"
-              )
-              if q["type"] == "mcq":
-                ans = st.radio(
-                    "보기 선택",
-                    q["options"],
-                    key=f"test_mcq_{idx}",
-                    label_visibility="collapsed",
-                )
-                user_responses[idx] = int(ans.split(".")[0])
-              else:
-                ans = st.text_input(
-                    "정답 입력",
-                    key=f"test_short_{idx}",
-                    label_visibility="collapsed",
-                )
-                user_responses[idx] = ans.strip().replace(" ", "")
-              st.markdown("---")
-
-            if st.button("🏁 테스트 채점하기"):
-              st.session_state.test_answers = user_responses
-              st.session_state.test_submitted = True
-              st.rerun()
-          else:
-            st.markdown("### 📊 실전 테스트 채점 결과")
-            score = 0
-            questions = st.session_state.test_questions
-            user_ans = st.session_state.test_answers
-
-            for idx, q in enumerate(questions):
-              user_val = user_ans.get(idx)
-              if q["type"] == "mcq":
-                is_ok = user_val == q["answer"]
-                correct_str = f"{q['answer']}번"
-              else:
-                correct_str = str(q["answer"])
-                is_ok = user_val == correct_str.replace(" ", "")
-
-              if is_ok:
-                score += 1
-                st.success(
-                    f"문제 {idx + 1}: 정답! 🎉 (제출한 답: {user_val})"
-                )
-              else:
-                st.error(
-                    f"문제 {idx + 1}: 오답 🥲 (제출한 답: {user_val} / 정답:"
-                    f" {correct_str})"
-                )
-                st.info(f"💡 해설: {q['explanation']}")
-
-            total_q = len(questions)
-            st.markdown(
-                f"### 🎯 최종 점수: {score} / {total_q} 점"
-                f" ({int(score/total_q*100)}점)"
-            )
-
-            if st.button("🔄 테스트 다시 풀기"):
-              st.session_state.test_started = False
-              st.rerun()
-
-    st.markdown("</div>", unsafe_allow_html=True)
+            st.warning("답안을 먼저 입력해 주세요!")
+        st.markdown("---")
