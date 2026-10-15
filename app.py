@@ -1,6 +1,7 @@
 import json
+import os
 import random
-from PIL import Image  # 이미지 회전을 위해 추가된 라이브러리
+from PIL import Image
 import streamlit as st
 
 # 페이지 설정
@@ -193,7 +194,18 @@ elif st.session_state.current_page == "객관식 문제":
   if not mcqs:
     st.warning("등록된 객관식 문제가 없습니다.")
   else:
-    for idx, q in enumerate(mcqs):
+    if f"rand_mcq_{selected_grade}_{selected_unit}" not in st.session_state:
+      shuffled_mcqs = mcqs.copy()
+      random.shuffle(shuffled_mcqs)
+      st.session_state[f"rand_mcq_{selected_grade}_{selected_unit}"] = (
+          shuffled_mcqs
+      )
+
+    current_mcqs = st.session_state[
+        f"rand_mcq_{selected_grade}_{selected_unit}"
+    ]
+
+    for idx, q in enumerate(current_mcqs):
       st.markdown(f"**Q{idx + 1}. {q['question']}**")
       choice = st.radio(
           f"정답 선택 (Q{idx + 1})",
@@ -219,7 +231,18 @@ elif st.session_state.current_page == "서술형 문제":
   if not shorts:
     st.warning("등록된 서술형 문제가 없습니다.")
   else:
-    for idx, s in enumerate(shorts):
+    if f"rand_short_{selected_grade}_{selected_unit}" not in st.session_state:
+      shuffled_shorts = shorts.copy()
+      random.shuffle(shuffled_shorts)
+      st.session_state[f"rand_short_{selected_grade}_{selected_unit}"] = (
+          shuffled_shorts
+      )
+
+    current_shorts = st.session_state[
+        f"rand_short_{selected_grade}_{selected_unit}"
+    ]
+
+    for idx, s in enumerate(current_shorts):
       st.markdown(f"**S{idx + 1}. {s['question']}**")
       ans = st.text_area(
           f"답안 작성 (S{idx + 1})", key=f"short_s_{selected_unit}_{idx}"
@@ -259,11 +282,11 @@ elif st.session_state.current_page == "실전 테스트":
       st.balloons()
       st.success("실전 테스트가 제출되었습니다! 수고하셨습니다. 👏")
 
-# 🔒 비밀 개인 공간 페이지 (6자리 비밀번호, 단독 큼직한 뷰어, 회전 기능 포함)
+# 🔒 비밀 개인 공간 페이지 (영구 저장 폴더 연동, 회전/확대/삭제 기능 포함)
 elif st.session_state.current_page == "Magna":
   st.markdown("## 🔒 Area Magna")
   st.markdown(
-      "이곳은 과학 내용과 상관없이 나 혼자만의 메모와 사진을 보관하는"
+      "이곳은 과학 내용과 상관없이 나 혼자만의 메모와 사진을 영구 보관하는"
       " 공간입니다."
   )
   st.divider()
@@ -275,7 +298,7 @@ elif st.session_state.current_page == "Magna":
     )
 
     if st.button("잠금 해제"):
-      if input_pw == "634715":  # 원하는 6자리 비밀번호로 변경 가능
+      if input_pw == "123456":  # 원하는 6자리 비밀번호로 변경 가능
         st.session_state.is_authenticated = True
         st.success("잠금이 해제되었습니다!")
         st.rerun()
@@ -288,48 +311,89 @@ elif st.session_state.current_page == "Magna":
       st.rerun()
 
     st.markdown("---")
-    st.markdown("### 🖼️ 나만의 사진 갤러리 (단독 큼직한 뷰어 & 회전 기능)")
+    st.markdown("### 🖼️ 영구 보관 사진 갤러리")
 
+    # 사진을 안전하게 저장할 폴더 자동 생성
+    PHOTO_DIR = "secret_photos"
+    os.makedirs(PHOTO_DIR, exist_ok=True)
+
+    # 새로운 사진 업로드 기능
     uploaded_files = st.file_uploader(
-        "보관할 사진들을 업로드하세요",
+        "새로운 사진을 업로드하면 폴더에 영구 저장됩니다",
         type=["jpg", "png", "jpeg"],
         accept_multiple_files=True,
     )
 
     if uploaded_files:
-      # 업로드된 파일 이름 목록 추출
-      file_names = [file.name for file in uploaded_files]
+      for file in uploaded_files:
+        file_path = os.path.join(PHOTO_DIR, file.name)
+        # 파일을 서버 폴더에 영구 기록
+        with open(file_path, "wb") as f:
+          f.write(file.getbuffer())
+      st.success("새로운 사진이 영구 보관함에 저장되었습니다! 🎉")
 
-      # 1. 보고 싶은 사진을 하나씩 콕 집어서 큼직하게 볼 수 있는 선택 상자
+    # 폴더에 저장되어 있는 모든 사진 목록 불러오기
+    saved_photos = sorted(os.listdir(PHOTO_DIR))
+    saved_photos = [
+        p for p in saved_photos if p.lower().endswith((".png", ".jpg", ".jpeg"))
+    ]
+
+    if saved_photos:
       selected_name = st.selectbox(
-          "📁 확인하고 싶은 사진을 선택하세요", file_names
+          "📁 보관된 사진 중 확인하고 싶은 사진을 선택하세요", saved_photos
       )
+      file_path = os.path.join(PHOTO_DIR, selected_name)
 
-      # 선택된 파일 찾기
-      selected_file = next(f for f in uploaded_files if f.name == selected_name)
-
-      # 회전 상태 저장 키 생성
       rot_key = f"rot_{selected_name}"
       if rot_key not in st.session_state:
         st.session_state[rot_key] = 0
 
-      # 회전 조절 버튼들
-      c_r1, c_r2, c_r3 = st.columns([1, 1, 3])
+      zoom_key = f"zoom_{selected_name}"
+      if zoom_key not in st.session_state:
+        st.session_state[zoom_key] = 100
+
+      c_r1, c_r2, c_r3, c_r4 = st.columns([1, 1, 1, 2])
       with c_r1:
-        if st.button("↺ 왼쪽으로 90도 회전"):
+        if st.button("↺ 왼쪽 90도"):
           st.session_state[rot_key] = (st.session_state[rot_key] - 90) % 360
       with c_r2:
-        if st.button("↻ 오른쪽으로 90도 회전"):
+        if st.button("↻ 오른쪽 90도"):
           st.session_state[rot_key] = (st.session_state[rot_key] + 90) % 360
+      with c_r3:
+        if st.button("🗑️ 사진 삭제"):
+          os.remove(file_path)
+          st.success("사진이 삭제되었습니다.")
+          st.rerun()
 
-      # PIL을 이용해 이미지 불러오기 및 회전 적용
-      image = Image.open(selected_file)
+      # 확대 비율 조절 슬라이더
+      zoom_percent = st.slider(
+          "🔍 사진 확대 비율 조절 (%)",
+          min_value=50,
+          max_value=300,
+          value=100,
+          step=10,
+          key=zoom_key,
+      )
+
+      # PIL을 이용한 회전 및 확대 처리
+      image = Image.open(file_path)
       current_rotation = st.session_state[rot_key]
       if current_rotation != 0:
         image = image.rotate(current_rotation, expand=True)
 
-      # 2. 선택한 사진을 화면 가득 큼지막하게 출력
-      st.image(image, caption=f"{selected_name} (회전: {current_rotation}°)", use_column_width=True)
+      if zoom_percent != 100:
+        w, h = image.size
+        new_w = int(w * (zoom_percent / 100))
+        new_h = int(h * (zoom_percent / 100))
+        image = image.resize((new_w, new_h))
+
+      st.image(
+          image,
+          caption=f"{selected_name} (회전: {current_rotation}°, 확대: {zoom_percent}%)",
+          width=int(700 * (zoom_percent / 100)),
+      )
+    else:
+      st.info("저장된 사진이 없습니다. 위에서 사진을 업로드해 보세요!")
 
     st.markdown("---")
     st.markdown("### 📝 비밀 메모장")
