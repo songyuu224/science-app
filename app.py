@@ -6,7 +6,7 @@ import streamlit as st
 
 # 페이지 설정
 st.set_page_config(
-    page_title="중학 과학 마스터", page_icon="🧪", layout="wide"
+    page_title="중학 과학 마스터 & 비밀 공간", page_icon="🧪", layout="wide"
 )
 
 
@@ -67,20 +67,6 @@ else:
         if item["grade"] == selected_grade and item["unit"] == selected_unit
     ]
 
-# 학년이나 단원이 바뀔 때 기존 랜덤 문제 캐시 초기화 (매번 새로 섞이도록)
-prev_filter_key = f"{selected_grade}_{selected_unit}"
-if (
-    "last_filter" not in st.session_state
-    or st.session_state.last_filter != prev_filter_key
-):
-  st.session_state.last_filter = prev_filter_key
-  # 기존에 저장된 랜덤 셔플 상태 지우기
-  keys_to_clear = [
-      k for k in st.session_state.keys() if k.startswith("rand_")
-  ]
-  for k in keys_to_clear:
-    del st.session_state[k]
-
 # -------------------------------------------------------------
 # 메인 화면 홈 대시보드
 # -------------------------------------------------------------
@@ -102,18 +88,24 @@ with col_m2:
     st.session_state.current_page = "암기 파트"
     st.rerun()
 with col_m3:
-  # 객관식 창을 누를 때마다 문제를 새로 랜덤 셔플하기 위해 키 삭제
   if st.button("📝 객관식", use_container_width=True):
-    if f"rand_mcq_{selected_grade}_{selected_unit}" in st.session_state:
-      del st.session_state[f"rand_mcq_{selected_grade}_{selected_unit}"]
     st.session_state.current_page = "객관식 문제"
+    # 객관식 창에 들어갈 때 곧바로 랜덤 문제 1개 뽑기
+    mcqs = [item for item in filtered_data if item["type"] == "mcq"]
+    if mcqs:
+      st.session_state.current_mcq = random.choice(mcqs)
+    else:
+      st.session_state.current_mcq = None
     st.rerun()
 with col_m4:
-  # 서술형 창을 누를 때마다 문제를 새로 랜덤 셔플하기 위해 키 삭제
   if st.button("✍️ 서술형", use_container_width=True):
-    if f"rand_short_{selected_grade}_{selected_unit}" in st.session_state:
-      del st.session_state[f"rand_short_{selected_grade}_{selected_unit}"]
     st.session_state.current_page = "서술형 문제"
+    # 서술형 창에 들어갈 때 곧바로 랜덤 문제 1개 뽑기
+    shorts = [item for item in filtered_data if item["type"] == "short"]
+    if shorts:
+      st.session_state.current_short = random.choice(shorts)
+    else:
+      st.session_state.current_short = None
     st.rerun()
 with col_m5:
   if st.button("🏆 실전 테스트", use_container_width=True):
@@ -207,31 +199,33 @@ elif st.session_state.current_page == "암기 파트":
           st.rerun()
 
 elif st.session_state.current_page == "객관식 문제":
-  st.markdown(f"## 📝 [{selected_grade} / {selected_unit}] 객관식 문제 은행")
+  st.markdown(f"## 📝 [{selected_grade} / {selected_unit}] 랜덤 객관식 퀴즈")
   st.divider()
 
   mcqs = [item for item in filtered_data if item["type"] == "mcq"]
   if not mcqs:
     st.warning("등록된 객관식 문제가 없습니다.")
   else:
-    # 🔄 창을 켤 때마다 매번 새롭게 무작위로 섞이도록 설정
-    rand_key_mcq = f"rand_mcq_{selected_grade}_{selected_unit}"
-    if rand_key_mcq not in st.session_state:
-      shuffled_mcqs = mcqs.copy()
-      random.shuffle(shuffled_mcqs)
-      st.session_state[rand_key_mcq] = shuffled_mcqs
+    # 세션에 현재 무작위 문제가 없으면 새로 뽑기
+    if (
+        "current_mcq" not in st.session_state
+        or st.session_state.current_mcq is None
+    ):
+      st.session_state.current_mcq = random.choice(mcqs)
 
-    current_mcqs = st.session_state[rand_key_mcq]
+    q = st.session_state.current_mcq
 
-    for idx, q in enumerate(current_mcqs):
-      st.markdown(f"**Q{idx + 1}. {q['question']}**")
-      choice = st.radio(
-          f"정답 선택 (Q{idx + 1})",
-          options=range(len(q["options"])),
-          format_func=lambda x: q["options"][x],
-          key=f"mcq_s_{selected_unit}_{idx}",
-      )
-      if st.button(f"정답 확인 (Q{idx + 1})", key=f"btn_mcq_{selected_unit}_{idx}"):
+    st.markdown(f"### ❓ **{q['question']}**")
+    choice = st.radio(
+        "정답을 선택하세요:",
+        options=range(len(q["options"])),
+        format_func=lambda x: q["options"][x],
+        key="rand_mcq_radio",
+    )
+
+    col_btn1, col_btn2 = st.columns([1, 3])
+    with col_btn1:
+      if st.button("정답 확인하기"):
         if choice + 1 == q["answer"]:
           st.success(f"정답입니다! 🎉\n\n**해설:** {q['explanation']}")
         else:
@@ -239,64 +233,50 @@ elif st.session_state.current_page == "객관식 문제":
               f"틀렸습니다. 정답은 {q['answer']}번 입니다.\n\n**해설:**"
               f" {q['explanation']}"
           )
-      st.markdown("---")
+
+    with col_btn2:
+      if st.button("🔀 다른 무작위 문제 풀기"):
+        st.session_state.current_mcq = random.choice(mcqs)
+        st.rerun()
 
 elif st.session_state.current_page == "서술형 문제":
-  st.markdown(f"## ✍️ [{selected_grade} / {selected_unit}] 서술형 주관식")
+  st.markdown(f"## ✍️ [{selected_grade} / {selected_unit}] 랜덤 서술형 퀴즈")
   st.divider()
 
   shorts = [item for item in filtered_data if item["type"] == "short"]
   if not shorts:
     st.warning("등록된 서술형 문제가 없습니다.")
   else:
-    # 🔄 창을 켤 때마다 매번 새롭게 무작위로 섞이도록 설정
-    rand_key_short = f"rand_short_{selected_grade}_{selected_unit}"
-    if rand_key_short not in st.session_state:
-      shuffled_shorts = shorts.copy()
-      random.shuffle(shuffled_shorts)
-      st.session_state[rand_key_short] = shuffled_shorts
+    # 세션에 현재 무작위 서술형 문제가 없으면 새로 뽑기
+    if (
+        "current_short" not in st.session_state
+        or st.session_state.current_short is None
+    ):
+      st.session_state.current_short = random.choice(shorts)
 
-    current_shorts = st.session_state[rand_key_short]
+    s = st.session_state.current_short
 
-    for idx, s in enumerate(current_shorts):
-      st.markdown(f"**S{idx + 1}. {s['question']}**")
-      ans = st.text_area(
-          f"답안 작성 (S{idx + 1})", key=f"short_s_{selected_unit}_{idx}"
-      )
-      if st.button(
-          f"모범 답안 확인 (S{idx + 1})", key=f"btn_short_{selected_unit}_{idx}"
-      ):
+    st.markdown(f"### ❓ **{s['question']}**")
+    ans = st.text_area("답안을 작성해 보세요:", key="rand_short_textarea")
+
+    col_s1, col_s2 = st.columns([1, 3])
+    with col_s1:
+      if st.button("모범 답안 확인하기"):
         if ans.strip():
           st.info(f"✨ **모범 답안:** {s['answer']}")
           st.markdown(f"💡 **채점 기준 및 해설:** {s['explanation']}")
         else:
-          st.warning("답안을 입력해 주세요!")
-      st.markdown("---")
+          st.warning("답안을 먼저 입력해 주세요!")
+
+    with col_s2:
+      if st.button("🔀 다른 무작위 문제 풀기"):
+        st.session_state.current_short = random.choice(shorts)
+        st.rerun()
 
 elif st.session_state.current_page == "실전 테스트":
   st.markdown(f"## 🏆 [{selected_grade} / {selected_unit}] 실전 모의고사")
   st.divider()
-
-  tests = [item for item in filtered_data if item["type"] in ["mcq", "short"]]
-  if not tests:
-    st.warning("테스트 문항이 부족합니다.")
-  else:
-    for idx, t in enumerate(tests):
-      st.markdown(f"**문제 {idx + 1}.** {t['question']}")
-      if t["type"] == "mcq":
-        for opt in t["options"]:
-          st.write(opt)
-        st.text_input(
-            f"정답 번호 입력 (문제 {idx + 1})", key=f"t_ans_{selected_unit}_{idx}"
-        )
-      else:
-        st.text_input(
-            f"서술형 답안 입력 (문제 {idx + 1})", key=f"t_ans_{selected_unit}_{idx}"
-        )
-      st.markdown("---")
-    if st.button("🏁 테스트 제출"):
-      st.balloons()
-      st.success("실전 테스트가 제출되었습니다! 수고하셨습니다. 👏")
+  st.write("실전 테스트 모드입니다.")
 
 # 🔒 비밀 개인 공간 페이지
 elif st.session_state.current_page == "Magna":
@@ -314,7 +294,7 @@ elif st.session_state.current_page == "Magna":
     )
 
     if st.button("잠금 해제"):
-      if input_pw == "123456":  # 원하는 6자리 비밀번호
+      if input_pw == "634715":  # 원하는 6자리 비밀번호
         st.session_state.is_authenticated = True
         st.success("잠금이 해제되었습니다!")
         st.rerun()
@@ -382,7 +362,7 @@ elif st.session_state.current_page == "Magna":
           min_value=50,
           max_value=300,
           value=100,
-          step=5,
+          step=10,
           key=zoom_key,
       )
 
