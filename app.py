@@ -28,16 +28,6 @@ if "current_page" not in st.session_state:
 if "is_authenticated" not in st.session_state:
   st.session_state.is_authenticated = False  # 비밀 공간 잠금 상태
 
-# 앱을 새로 켤 때마다(세션 시작 시) 문제가 매번 새롭게 랜덤 섞이도록 초기화 키 리셋
-if "initialized_random" not in st.session_state:
-  st.session_state.initialized_random = True
-  # 기존에 저장된 랜덤 섞인 문제 세션들을 초기화하여 앱을 켤 때마다 다시 섞이게 함
-  keys_to_clear = [
-      k for k in st.session_state.keys() if k.startswith("rand_")
-  ]
-  for k in keys_to_clear:
-    del st.session_state[k]
-
 # -------------------------------------------------------------
 # 사이드바: 학년 및 단원 필터
 # -------------------------------------------------------------
@@ -77,6 +67,20 @@ else:
         if item["grade"] == selected_grade and item["unit"] == selected_unit
     ]
 
+# 학년이나 단원이 바뀔 때 기존 랜덤 문제 캐시 초기화 (매번 새로 섞이도록)
+prev_filter_key = f"{selected_grade}_{selected_unit}"
+if (
+    "last_filter" not in st.session_state
+    or st.session_state.last_filter != prev_filter_key
+):
+  st.session_state.last_filter = prev_filter_key
+  # 기존에 저장된 랜덤 셔플 상태 지우기
+  keys_to_clear = [
+      k for k in st.session_state.keys() if k.startswith("rand_")
+  ]
+  for k in keys_to_clear:
+    del st.session_state[k]
+
 # -------------------------------------------------------------
 # 메인 화면 홈 대시보드
 # -------------------------------------------------------------
@@ -98,15 +102,15 @@ with col_m2:
     st.session_state.current_page = "암기 파트"
     st.rerun()
 with col_m3:
+  # 객관식 창을 누를 때마다 문제를 새로 랜덤 셔플하기 위해 키 삭제
   if st.button("📝 객관식", use_container_width=True):
-    # 객관식 창을 누를 때마다 문제가 새로 섞이도록 기존 랜덤 세션 삭제
     if f"rand_mcq_{selected_grade}_{selected_unit}" in st.session_state:
       del st.session_state[f"rand_mcq_{selected_grade}_{selected_unit}"]
     st.session_state.current_page = "객관식 문제"
     st.rerun()
 with col_m4:
+  # 서술형 창을 누를 때마다 문제를 새로 랜덤 셔플하기 위해 키 삭제
   if st.button("✍️ 서술형", use_container_width=True):
-    # 서술형 창을 누할 때마다 문제가 새로 섞이도록 기존 랜덤 세션 삭제
     if f"rand_short_{selected_grade}_{selected_unit}" in st.session_state:
       del st.session_state[f"rand_short_{selected_grade}_{selected_unit}"]
     st.session_state.current_page = "서술형 문제"
@@ -210,14 +214,14 @@ elif st.session_state.current_page == "객관식 문제":
   if not mcqs:
     st.warning("등록된 객관식 문제가 없습니다.")
   else:
-    # 🎲 창을 켤 때마다 매번 새롭게 무작위로 섞이도록 설정
-    rand_key = f"rand_mcq_{selected_grade}_{selected_unit}"
-    if rand_key not in st.session_state:
+    # 🔄 창을 켤 때마다 매번 새롭게 무작위로 섞이도록 설정
+    rand_key_mcq = f"rand_mcq_{selected_grade}_{selected_unit}"
+    if rand_key_mcq not in st.session_state:
       shuffled_mcqs = mcqs.copy()
       random.shuffle(shuffled_mcqs)
-      st.session_state[rand_key] = shuffled_mcqs
+      st.session_state[rand_key_mcq] = shuffled_mcqs
 
-    current_mcqs = st.session_state[rand_key]
+    current_mcqs = st.session_state[rand_key_mcq]
 
     for idx, q in enumerate(current_mcqs):
       st.markdown(f"**Q{idx + 1}. {q['question']}**")
@@ -245,14 +249,14 @@ elif st.session_state.current_page == "서술형 문제":
   if not shorts:
     st.warning("등록된 서술형 문제가 없습니다.")
   else:
-    # 🎲 창을 켤 때마다 매번 새롭게 무작위로 섞이도록 설정
-    rand_key = f"rand_short_{selected_grade}_{selected_unit}"
-    if rand_key not in st.session_state:
+    # 🔄 창을 켤 때마다 매번 새롭게 무작위로 섞이도록 설정
+    rand_key_short = f"rand_short_{selected_grade}_{selected_unit}"
+    if rand_key_short not in st.session_state:
       shuffled_shorts = shorts.copy()
       random.shuffle(shuffled_shorts)
-      st.session_state[rand_key] = shuffled_shorts
+      st.session_state[rand_key_short] = shuffled_shorts
 
-    current_shorts = st.session_state[rand_key]
+    current_shorts = st.session_state[rand_key_short]
 
     for idx, s in enumerate(current_shorts):
       st.markdown(f"**S{idx + 1}. {s['question']}**")
@@ -328,4 +332,85 @@ elif st.session_state.current_page == "Magna":
     PHOTO_DIR = "secret_photos"
     os.makedirs(PHOTO_DIR, exist_ok=True)
 
-    uploaded_files = st
+    uploaded_files = st.file_uploader(
+        "새로운 사진을 업로드하면 폴더에 영구 저장됩니다",
+        type=["jpg", "png", "jpeg"],
+        accept_multiple_files=True,
+    )
+
+    if uploaded_files:
+      for file in uploaded_files:
+        file_path = os.path.join(PHOTO_DIR, file.name)
+        with open(file_path, "wb") as f:
+          f.write(file.getbuffer())
+      st.success("새로운 사진이 영구 보관함에 저장되었습니다! 🎉")
+
+    saved_photos = sorted(os.listdir(PHOTO_DIR))
+    saved_photos = [
+        p for p in saved_photos if p.lower().endswith((".png", ".jpg", ".jpeg"))
+    ]
+
+    if saved_photos:
+      selected_name = st.selectbox(
+          "📁 보관된 사진 중 확인하고 싶은 사진을 선택하세요", saved_photos
+      )
+      file_path = os.path.join(PHOTO_DIR, selected_name)
+
+      rot_key = f"rot_{selected_name}"
+      if rot_key not in st.session_state:
+        st.session_state[rot_key] = 0
+
+      zoom_key = f"zoom_{selected_name}"
+      if zoom_key not in st.session_state:
+        st.session_state[zoom_key] = 100
+
+      c_r1, c_r2, c_r3, c_r4 = st.columns([1, 1, 1, 2])
+      with c_r1:
+        if st.button("↺ 왼쪽 90도"):
+          st.session_state[rot_key] = (st.session_state[rot_key] - 90) % 360
+      with c_r2:
+        if st.button("↻ 오른쪽 90도"):
+          st.session_state[rot_key] = (st.session_state[rot_key] + 90) % 360
+      with c_r3:
+        if st.button("🗑️ 사진 삭제"):
+          os.remove(file_path)
+          st.success("사진이 삭제되었습니다.")
+          st.rerun()
+
+      zoom_percent = st.slider(
+          "🔍 사진 확대 비율 조절 (%)",
+          min_value=50,
+          max_value=300,
+          value=100,
+          step=5,
+          key=zoom_key,
+      )
+
+      image = Image.open(file_path)
+      current_rotation = st.session_state[rot_key]
+      if current_rotation != 0:
+        image = image.rotate(current_rotation, expand=True)
+
+      if zoom_percent != 100:
+        w, h = image.size
+        new_w = int(w * (zoom_percent / 100))
+        new_h = int(h * (zoom_percent / 100))
+        image = image.resize((new_w, new_h))
+
+      st.image(
+          image,
+          caption=f"{selected_name} (회전: {current_rotation}°, 확대: {zoom_percent}%)",
+          width=int(700 * (zoom_percent / 100)),
+      )
+    else:
+      st.info("저장된 사진이 없습니다. 위에서 사진을 업로드해 보세요!")
+
+    st.markdown("---")
+    st.markdown("### 📝 비밀 메모장")
+    st.text_area(
+        "여기에 자유롭게 내용을 적어보세요.",
+        height=200,
+        placeholder="내용을 입력하세요...",
+    )
+    if st.button("임시 저장"):
+      st.info("메모가 입력되었습니다.")
