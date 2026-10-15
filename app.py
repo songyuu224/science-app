@@ -2,13 +2,13 @@ import json
 import random
 import streamlit as st
 
-# 페이지 설정 (와이드 레이아웃)
+# 페이지 설정
 st.set_page_config(
-    page_title="중학 과학 마스터 플랫폼", page_icon="🧪", layout="wide"
+    page_title="중학 과학 마스터", page_icon="🧪", layout="wide"
 )
 
 
-# 데이터 로드 함수 (캐시 적용)
+# 데이터 로드 함수
 @st.cache_data
 def load_data():
   try:
@@ -20,10 +20,17 @@ def load_data():
 
 data = load_data()
 
+# 세션 상태 초기화
+if "current_page" not in st.session_state:
+  st.session_state.current_page = "메인 홈"
+if "is_authenticated" not in st.session_state:
+  st.session_state.is_authenticated = False  # 비밀 공간 잠금 상태
+
 # -------------------------------------------------------------
-# 사이드바: 학년 및 단원 설정
+# 사이드바: 학년 및 단원 필터
 # -------------------------------------------------------------
 st.sidebar.markdown("### 🎛️ 학습 설정")
+
 if not data:
   grades = ["1학년"]
 else:
@@ -59,40 +66,40 @@ else:
     ]
 
 # -------------------------------------------------------------
-# 메인 홈 화면: 앱을 켜면 바로 뜨는 깔끔한 대시보드 메뉴
+# 메인 화면 홈 대시보드
 # -------------------------------------------------------------
 st.markdown("## 🧪 중학 과학 복습 & 암기 마스터 플랫폼")
 st.markdown(
-    "중학교 1~3학년 전 과학 개념과 자잘한 암기 팁까지 완벽하게 정복하세요!"
+    "중학교 1~3학년 전 과학 개념과 자잘한 암기, 문제 풀이를 한 번에 정복하세요!"
 )
 st.divider()
 
-# 세션 상태로 페이지(창) 관리
-if "current_page" not in st.session_state:
-  st.session_state.current_page = "메인 홈"
-
-# 메인 메뉴 버튼 영역 (누르면 해당 창으로 즉시 이동)
-col_m1, col_m2, col_m3, col_m4, col_m5 = st.columns(5)
+# 메인 네비게이션 버튼 영역
+col_m1, col_m2, col_m3, col_m4, col_m5, col_m6 = st.columns(6)
 
 with col_m1:
-  if st.button("📖 대폭 강화된 개념", use_container_width=True):
+  if st.button("📖 개념 학습", use_container_width=True):
     st.session_state.current_page = "개념 학습"
     st.rerun()
 with col_m2:
-  if st.button("🎴 암기 플래시카드", use_container_width=True):
+  if st.button("🎴 암기 카드", use_container_width=True):
     st.session_state.current_page = "암기 파트"
     st.rerun()
 with col_m3:
-  if st.button("📝 객관식 문제", use_container_width=True):
+  if st.button("📝 객관식", use_container_width=True):
     st.session_state.current_page = "객관식 문제"
     st.rerun()
 with col_m4:
-  if st.button("✍️ 서술형 주관식", use_container_width=True):
+  if st.button("✍️ 서술형", use_container_width=True):
     st.session_state.current_page = "서술형 문제"
     st.rerun()
 with col_m5:
   if st.button("🏆 실전 테스트", use_container_width=True):
     st.session_state.current_page = "실전 테스트"
+    st.rerun()
+with col_m6:
+  if st.button("🔒 Magna", use_container_width=True):
+    st.session_state.current_page = "Magna"
     st.rerun()
 
 st.markdown("")
@@ -105,43 +112,23 @@ if st.session_state.current_page != "메인 홈":
   st.markdown("---")
 
 # -------------------------------------------------------------
-# 각 메뉴별 독립된 창 렌더링
+# 각 메뉴별 페이지 렌더링
 # -------------------------------------------------------------
 
 if st.session_state.current_page == "메인 홈":
   st.info(
-      "👆 상단의 메뉴 버튼을 클릭하여 원하는 학습 창으로 바로 이동해"
-      " 보세요!"
+      "👆 상단의 메뉴 버튼을 클릭하여 원하는 학습 창 또는 비밀 공간으로 바로"
+      " 이동하세요!"
   )
 
-  st.markdown("### 📊 현재 학습 현황")
+  st.markdown("### 📊 현재 학습 정보")
   st.markdown(f"- **선택 학년:** {selected_grade}")
   st.markdown(f"- **선택 단원:** {selected_unit}")
-  st.markdown(f"- **총 등록된 학습/문제 항목:** {len(filtered_data)}개")
-
-  st.markdown("---")
-  st.markdown("### 💡 과학 만점 공부 팁")
-  st.markdown(
-      "1. **📖 대폭 강화된 개념**: 시험에 자주 나오는 자잘한 개념과 공식들을"
-      " 사람 눈에 편한 수식으로 싹 정리했습니다."
-  )
-  st.markdown(
-      "2. **🎴 암기 파트**: 카드를 넘기며 핵심 키워드와 그림 설명을 매칭해"
-      " 외우세요."
-  )
-  st.markdown(
-      "3. **📝 문제 은행 & 실전 테스트**: 배운 내용을 실전에 적용하며 완벽히"
-      " 내 것으로 만듭니다."
-  )
+  st.markdown(f"- **등록된 총 데이터 수:** {len(filtered_data)}개")
 
 elif st.session_state.current_page == "개념 학습":
   st.markdown(
-      f"## 📖 [{selected_grade} / {selected_unit}] 꼼꼼 핵심 개념 & 지엽 암기"
-      " 노트"
-  )
-  st.markdown(
-      "시험에 헷갈리기 쉬운 세부 내용과 공식들을 알기 쉽게 풀어놓은"
-      " 공간입니다."
+      f"## 📖 [{selected_grade} / {selected_unit}] 꼼꼼 핵심 개념 & 암기 노트"
   )
   st.divider()
 
@@ -155,6 +142,8 @@ elif st.session_state.current_page == "개념 학습":
         st.success(f"**[개념 및 공식 정리]**\n\n{c['definition']}")
         if "image_description" in c and c["image_description"]:
           st.info(f"🖼️ **[시각 자료 및 상세 해설]**\n\n{c['image_description']}")
+        if "image_url" in c and c["image_url"]:
+          st.image(c["image_url"], caption=c["term"])
         st.markdown("---")
 
 elif st.session_state.current_page == "암기 파트":
@@ -171,13 +160,17 @@ elif st.session_state.current_page == "암기 파트":
       st.session_state.card_idx = 0
 
     card = cards[st.session_state.card_idx]
-    st.markdown(f"**카드 번호:** {st.session_state.card_idx + 1} / {len(cards)}")
+    st.markdown(
+        f"**카드 번호:** {st.session_state.card_idx + 1} / {len(cards)}"
+    )
 
     with st.container():
       st.markdown(f"### 💡 키워드: {card['term']}")
       st.warning(f"핵심 내용:")
       if "image_description" in card and card["image_description"]:
         st.info(f"🖼️ **[그림 도식 설명]**\n\n{card['image_description']}")
+      if "image_url" in card and card["image_url"]:
+        st.image(card["image_url"], caption=card["term"])
 
     c1, c2 = st.columns(2)
     with c1:
@@ -187,7 +180,7 @@ elif st.session_state.current_page == "암기 파트":
           st.rerun()
     with c2:
       if st.button("다음 카드 ➡️"):
-        if st.session_state.card_idx < len(cards - 1):
+        if st.session_state.card_idx < len(cards) - 1:
           st.session_state.card_idx += 1
           st.rerun()
 
@@ -205,9 +198,9 @@ elif st.session_state.current_page == "객관식 문제":
           f"정답 선택 (Q{idx + 1})",
           options=range(len(q["options"])),
           format_func=lambda x: q["options"][x],
-          key=f"mcq_s_{idx}",
+          key=f"mcq_s_{selected_unit}_{idx}",
       )
-      if st.button(f"정답 확인 (Q{idx + 1})", key=f"btn_mcq_{idx}"):
+      if st.button(f"정답 확인 (Q{idx + 1})", key=f"btn_mcq_{selected_unit}_{idx}"):
         if choice + 1 == q["answer"]:
           st.success(f"정답입니다! 🎉\n\n**해설:** {q['explanation']}")
         else:
@@ -227,8 +220,12 @@ elif st.session_state.current_page == "서술형 문제":
   else:
     for idx, s in enumerate(shorts):
       st.markdown(f"**S{idx + 1}. {s['question']}**")
-      ans = st.text_area(f"답안 작성 (S{idx + 1})", key=f"short_s_{idx}")
-      if st.button(f"모범 답안 확인 (S{idx + 1})", key=f"btn_short_{idx}"):
+      ans = st.text_area(
+          f"답안 작성 (S{idx + 1})", key=f"short_s_{selected_unit}_{idx}"
+      )
+      if st.button(
+          f"모범 답안 확인 (S{idx + 1})", key=f"btn_short_{selected_unit}_{idx}"
+      ):
         if ans.strip():
           st.info(f"✨ **모범 답안:** {s['answer']}")
           st.markdown(f"💡 **채점 기준 및 해설:** {s['explanation']}")
@@ -250,13 +247,65 @@ elif st.session_state.current_page == "실전 테스트":
         for opt in t["options"]:
           st.write(opt)
         st.text_input(
-            f"정답 번호 입력 (문제 {idx + 1})", key=f"t_ans_{idx}"
+            f"정답 번호 입력 (문제 {idx + 1})", key=f"t_ans_{selected_unit}_{idx}"
         )
       else:
         st.text_input(
-            f"서술형 답안 입력 (문제 {idx + 1})", key=f"t_ans_{idx}"
+            f"서술형 답안 입력 (문제 {idx + 1})", key=f"t_ans_{selected_unit}_{idx}"
         )
       st.markdown("---")
     if st.button("🏁 테스트 제출"):
       st.balloons()
       st.success("실전 테스트가 제출되었습니다! 수고하셨습니다. 👏")
+
+# 🔒 비밀 개인 공간 페이지 (6자리 비밀번호 및 사진 업로드 기능 포함)
+elif st.session_state.current_page == "Magna":
+  st.markdown("## 🔒 나만의 비밀 공간")
+  st.markdown(
+      "이곳은 과학 내용과 상관없이 나 혼자만의 메모와 사진을 보관하는"
+      " 공간입니다."
+  )
+  st.divider()
+
+  if not st.session_state.is_authenticated:
+    st.warning("⚠️ 보호된 공간입니다. 6자리 비밀번호를 입력해 주세요.")
+    input_pw = st.text_input(
+        "6자리 비밀번호 입력", type="password", max_chars=6
+    )
+
+    if st.button("잠금 해제"):
+      # 👇 여기에 원하시는 6자리 비밀번호를 설정하세요 (예: "123456")
+      if input_pw == "634715":
+        st.session_state.is_authenticated = True
+        st.success("잠금이 해제되었습니다!")
+        st.rerun()
+      else:
+        st.error("비밀번호 6자리가 틀렸습니다!")
+  else:
+    st.success("🔓 잠금이 해제되었습니다.")
+    if st.button("🔒 다시 잠그기"):
+      st.session_state.is_authenticated = False
+      st.rerun()
+
+    st.markdown("---")
+    st.markdown("### 🖼️ 나만의 사진 갤러리")
+    # 파일 업로더를 통해 폰이나 컴퓨터에서 사진을 바로 선택해 띄울 수 있습니다.
+    uploaded_files = st.file_uploader(
+        "비밀 공간에 보관할 사진을 업로드하세요 (여러 장 가능)",
+        type=["jpg", "png", "jpeg"],
+        accept_multiple_files=True,
+    )
+
+    if uploaded_files:
+      for file in uploaded_files:
+        st.image(file, caption=file.name, use_column_width=True)
+
+    st.markdown("---")
+    st.markdown("### 📝 비밀 메모장")
+    st.text_area(
+        "여기에 자유롭게 내용을 적어보세요.",
+        height=200,
+        placeholder="내용을 입력하세요...",
+    )
+    if st.button("임시 저장"):
+      st.info("메모가 입력되었습니다.")
