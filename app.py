@@ -1,5 +1,6 @@
 import json
 import random
+from PIL import Image  # 이미지 회전을 위해 추가된 라이브러리
 import streamlit as st
 
 # 페이지 설정
@@ -258,9 +259,9 @@ elif st.session_state.current_page == "실전 테스트":
       st.balloons()
       st.success("실전 테스트가 제출되었습니다! 수고하셨습니다. 👏")
 
-# 🔒 비밀 개인 공간 페이지 (6자리 비밀번호 및 사진 업로드 기능 포함)
+# 🔒 비밀 개인 공간 페이지 (6자리 비밀번호, 단독 큼직한 뷰어, 회전 기능 포함)
 elif st.session_state.current_page == "Magna":
-  st.markdown("## 🔒 나만의 비밀 공간")
+  st.markdown("## 🔒 Area Magna")
   st.markdown(
       "이곳은 과학 내용과 상관없이 나 혼자만의 메모와 사진을 보관하는"
       " 공간입니다."
@@ -274,8 +275,7 @@ elif st.session_state.current_page == "Magna":
     )
 
     if st.button("잠금 해제"):
-      # 👇 여기에 원하시는 6자리 비밀번호를 설정하세요 (예: "123456")
-      if input_pw == "634715":
+      if input_pw == "634715":  # 원하는 6자리 비밀번호로 변경 가능
         st.session_state.is_authenticated = True
         st.success("잠금이 해제되었습니다!")
         st.rerun()
@@ -288,17 +288,48 @@ elif st.session_state.current_page == "Magna":
       st.rerun()
 
     st.markdown("---")
-    st.markdown("### 🖼️ 나만의 사진 갤러리")
-    # 파일 업로더를 통해 폰이나 컴퓨터에서 사진을 바로 선택해 띄울 수 있습니다.
+    st.markdown("### 🖼️ 나만의 사진 갤러리 (단독 큼직한 뷰어 & 회전 기능)")
+
     uploaded_files = st.file_uploader(
-        "비밀 공간에 보관할 사진을 업로드하세요 (여러 장 가능)",
+        "보관할 사진들을 업로드하세요",
         type=["jpg", "png", "jpeg"],
         accept_multiple_files=True,
     )
 
     if uploaded_files:
-      for file in uploaded_files:
-        st.image(file, caption=file.name, use_column_width=True)
+      # 업로드된 파일 이름 목록 추출
+      file_names = [file.name for file in uploaded_files]
+
+      # 1. 보고 싶은 사진을 하나씩 콕 집어서 큼직하게 볼 수 있는 선택 상자
+      selected_name = st.selectbox(
+          "📁 확인하고 싶은 사진을 선택하세요", file_names
+      )
+
+      # 선택된 파일 찾기
+      selected_file = next(f for f in uploaded_files if f.name == selected_name)
+
+      # 회전 상태 저장 키 생성
+      rot_key = f"rot_{selected_name}"
+      if rot_key not in st.session_state:
+        st.session_state[rot_key] = 0
+
+      # 회전 조절 버튼들
+      c_r1, c_r2, c_r3 = st.columns([1, 1, 3])
+      with c_r1:
+        if st.button("↺ 왼쪽으로 90도 회전"):
+          st.session_state[rot_key] = (st.session_state[rot_key] - 90) % 360
+      with c_r2:
+        if st.button("↻ 오른쪽으로 90도 회전"):
+          st.session_state[rot_key] = (st.session_state[rot_key] + 90) % 360
+
+      # PIL을 이용해 이미지 불러오기 및 회전 적용
+      image = Image.open(selected_file)
+      current_rotation = st.session_state[rot_key]
+      if current_rotation != 0:
+        image = image.rotate(current_rotation, expand=True)
+
+      # 2. 선택한 사진을 화면 가득 큼지막하게 출력
+      st.image(image, caption=f"{selected_name} (회전: {current_rotation}°)", use_column_width=True)
 
     st.markdown("---")
     st.markdown("### 📝 비밀 메모장")
